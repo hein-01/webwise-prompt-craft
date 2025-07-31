@@ -13,6 +13,7 @@ const PromptGenerator = () => {
   const [activeTab, setActiveTab] = useState("ui");
   const [copied, setCopied] = useState(false);
   const [editablePrompt, setEditablePrompt] = useState("");
+  const [preservePrompt, setPreservePrompt] = useState(false);
   const promptTextareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
@@ -53,11 +54,13 @@ const PromptGenerator = () => {
 
   // Update editable prompt when form changes
   useEffect(() => {
-    const newPrompt = generatePrompt();
-    if (newPrompt) {
-      setEditablePrompt(newPrompt);
+    if (!preservePrompt) {
+      const newPrompt = generatePrompt();
+      if (newPrompt) {
+        setEditablePrompt(newPrompt);
+      }
     }
-  }, [formData]);
+  }, [formData, preservePrompt]);
 
   const copyToClipboard = async () => {
     try {
@@ -98,6 +101,7 @@ const PromptGenerator = () => {
   };
 
   const resetInputOnly = () => {
+    setPreservePrompt(true);
     setFormData({
       do: "",
       what: "",
@@ -106,6 +110,8 @@ const PromptGenerator = () => {
       action: "",
       additional: ""
     });
+    // Reset preserve flag after clearing inputs
+    setTimeout(() => setPreservePrompt(false), 100);
   };
 
   return (
