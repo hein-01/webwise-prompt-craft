@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,9 +12,6 @@ import { useToast } from "@/hooks/use-toast";
 const PromptGenerator = () => {
   const [activeTab, setActiveTab] = useState("ui");
   const [copied, setCopied] = useState(false);
-  const [editablePrompt, setEditablePrompt] = useState("");
-  const [preservePrompt, setPreservePrompt] = useState(false);
-  const promptTextareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
   // Form state
@@ -29,7 +26,7 @@ const PromptGenerator = () => {
 
   // Predefined options
   const doOptions = ["Make", "Add", "Change", "Delete"];
-  const whatOptions = ["Button", "Input field", "Navigation menu", "Header", "Footer", "Card", "Color"];
+  const whatOptions = ["Button", "Input field", "Navigation menu", "Header", "Footer", "Card"];
   const howOptions = ["Subtly rise up", "Fade in smoothly", "Slide from left", "Scale up gently"];
   const conditionOptions = ["When", "If", "After", "Before"];
   const actionOptions = ["You move your mouse over them", "You click on them", "The page loads", "You scroll down"];
@@ -52,19 +49,10 @@ const PromptGenerator = () => {
     return prompt;
   };
 
-  // Update editable prompt when form changes
-  useEffect(() => {
-    if (!preservePrompt) {
-      const newPrompt = generatePrompt();
-      if (newPrompt) {
-        setEditablePrompt(newPrompt);
-      }
-    }
-  }, [formData, preservePrompt]);
-
   const copyToClipboard = async () => {
+    const prompt = generatePrompt();
     try {
-      await navigator.clipboard.writeText(editablePrompt);
+      await navigator.clipboard.writeText(prompt);
       setCopied(true);
       toast({
         title: "Copied to clipboard!",
@@ -81,7 +69,6 @@ const PromptGenerator = () => {
   };
 
   const resetForm = () => {
-    const currentPromptLength = editablePrompt.length;
     setFormData({
       do: "",
       what: "",
@@ -90,28 +77,6 @@ const PromptGenerator = () => {
       action: "",
       additional: ""
     });
-    
-    // Position cursor at the end of existing prompt
-    setTimeout(() => {
-      if (promptTextareaRef.current) {
-        promptTextareaRef.current.focus();
-        promptTextareaRef.current.setSelectionRange(currentPromptLength, currentPromptLength);
-      }
-    }, 0);
-  };
-
-  const resetInputOnly = () => {
-    setPreservePrompt(true);
-    setFormData({
-      do: "",
-      what: "",
-      how: "",
-      condition: "",
-      action: "",
-      additional: ""
-    });
-    // Reset preserve flag after clearing inputs
-    setTimeout(() => setPreservePrompt(false), 100);
   };
 
   return (
@@ -230,9 +195,6 @@ const PromptGenerator = () => {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-semibold">Generated Prompt</h3>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={resetInputOnly} size="sm">
-                  Reset input
-                </Button>
                 <Button variant="outline" onClick={resetForm} size="sm">
                   Reset
                 </Button>
@@ -247,13 +209,11 @@ const PromptGenerator = () => {
                 </Button>
               </div>
             </div>
-            <Textarea
-              ref={promptTextareaRef}
-              value={editablePrompt || "Fill in the fields above to generate your prompt..."}
-              onChange={(e) => setEditablePrompt(e.target.value)}
-              placeholder="Your generated prompt will appear here and can be edited..."
-              className="min-h-[100px] bg-muted border-2 border-dashed border-border resize-none"
-            />
+            <div className="bg-muted p-4 rounded-lg min-h-[100px] border-2 border-dashed border-border">
+              <p className="text-foreground leading-relaxed">
+                {generatePrompt() || "Fill in the fields above to generate your prompt..."}
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
