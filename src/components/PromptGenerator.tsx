@@ -97,6 +97,17 @@ const PromptGenerator = () => {
     }, 0);
   };
 
+  const resetInputOnly = () => {
+    setFormData({
+      do: "",
+      what: "",
+      how: "",
+      condition: "",
+      action: "",
+      additional: ""
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-6xl mx-auto">
@@ -213,6 +224,9 @@ const PromptGenerator = () => {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-semibold">Generated Prompt</h3>
               <div className="flex gap-2">
+                <Button variant="outline" onClick={resetInputOnly} size="sm">
+                  Reset input
+                </Button>
                 <Button variant="outline" onClick={resetForm} size="sm">
                   Reset
                 </Button>
