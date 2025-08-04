@@ -11,11 +11,20 @@ import { Wand2, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const PromptGenerator = () => {
-  const [activeTab, setActiveTab] = useState("ui");
+  const [activeTab, setActiveTab] = useState("main");
   const [copied, setCopied] = useState(false);
   const [editablePrompt, setEditablePrompt] = useState("");
   const promptTextareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
+
+  // Main form state
+  const [mainData, setMainData] = useState({
+    build: "",
+    frontend: "",
+    backend: "",
+    database: "",
+    others: []
+  });
 
   // Form state
   const [formData, setFormData] = useState({
@@ -52,6 +61,34 @@ const PromptGenerator = () => {
     "Make sure you keep the same dimensions regardless of screen sizes",
     "Keep the original color scheme",
     "Maintain accessibility standards"
+  ];
+
+  // Main options
+  const buildOptions = [
+    "Build a directory website",
+    "Build an ecommerce website", 
+    "Build a multivendor marketplace",
+    "Build a webpage similar to the image uploaded"
+  ];
+
+  const frontendOptions = [
+    "Use HTML for structure, CSS for styling, and JavaScript for interactivity",
+    "Please use React framework for building dynamic user interfaces"
+  ];
+
+  const backendOptions = [
+    "Please use any suitable language(s) for the backend.",
+    "Please use Python as backend language to handle server logic, database interactions, and API development.",
+    "Please use Node.js as backend language to handle server logic, database interactions, and API development."
+  ];
+
+  const databaseOptions = [
+    "Choose a database system (Supabase preferred) as per project's data needs."
+  ];
+
+  const othersOptions = [
+    "Make sure the website is fully responsive for all devices",
+    "Create and document an API (e.g., RESTful API) to allow the front-end to communicate with the back-end."
   ];
 
   // Functionality options
@@ -150,6 +187,13 @@ const PromptGenerator = () => {
     }));
   };
 
+  const handleMainChange = (field: string, value: string | string[]) => {
+    setMainData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   const handleFunctionalityChange = (field: string, value: string | string[]) => {
     setFunctionalityData(prev => ({
       ...prev,
@@ -158,11 +202,26 @@ const PromptGenerator = () => {
   };
 
   const generatePrompt = () => {
+    if (activeTab === "main") {
+      return generateMainPrompt();
+    }
     if (activeTab === "functionality") {
       return generateFunctionalityPrompt();
     }
     const prompt = `${formData.do} ${formData.what} ${formData.how} ${formData.condition} ${formData.action}. ${formData.additional}`.trim();
     return prompt;
+  };
+
+  const generateMainPrompt = () => {
+    const parts = [
+      mainData.build,
+      mainData.frontend,
+      mainData.backend,
+      mainData.database,
+      mainData.others.length > 0 ? mainData.others.join(", ") : ""
+    ].filter(part => part.trim() !== "");
+    
+    return parts.join(" ");
   };
 
   const generateFunctionalityPrompt = () => {
@@ -205,7 +264,7 @@ const PromptGenerator = () => {
     if (newPrompt) {
       setEditablePrompt(newPrompt);
     }
-  }, [formData, functionalityData, activeTab]);
+  }, [formData, functionalityData, mainData, activeTab]);
 
   const copyToClipboard = async () => {
     try {
@@ -228,7 +287,15 @@ const PromptGenerator = () => {
   const resetForm = () => {
     const currentPromptLength = editablePrompt.length;
     
-    if (activeTab === "functionality") {
+    if (activeTab === "main") {
+      setMainData({
+        build: "",
+        frontend: "",
+        backend: "",
+        database: "",
+        others: []
+      });
+    } else if (activeTab === "functionality") {
       setFunctionalityData({
         listings: [],
         searchFiltering: [],
@@ -261,6 +328,44 @@ const PromptGenerator = () => {
     }, 0);
   };
 
+  const resetInputOnly = (preservePrompt = true) => {
+    if (activeTab === "main") {
+      setMainData({
+        build: "",
+        frontend: "",
+        backend: "",
+        database: "",
+        others: []
+      });
+    } else if (activeTab === "functionality") {
+      setFunctionalityData({
+        listings: [],
+        searchFiltering: [],
+        organizeBy: "",
+        organizeCategories: [],
+        detailsFor: "",
+        detailsWith: [],
+        registerFor: [],
+        registrationOptions: [],
+        securityConsiderations: [],
+        additional: []
+      });
+    } else {
+      setFormData({
+        do: "",
+        what: "",
+        how: "",
+        condition: "",
+        action: "",
+        additional: ""
+      });
+    }
+    
+    if (!preservePrompt) {
+      setEditablePrompt("");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-6xl mx-auto">
@@ -279,12 +384,33 @@ const PromptGenerator = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-          <TabsList className="grid w-full grid-cols-4 h-12">
+          <TabsList className="grid w-full grid-cols-5 h-12">
+            <TabsTrigger value="main" className="text-sm font-medium">Main</TabsTrigger>
             <TabsTrigger value="ui" className="text-sm font-medium">UI</TabsTrigger>
             <TabsTrigger value="functionality" className="text-sm font-medium">Functionality/Features</TabsTrigger>
             <TabsTrigger value="logic" className="text-sm font-medium">Logic</TabsTrigger>
             <TabsTrigger value="database" className="text-sm font-medium">Database</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="main" className="mt-6">
+            <Card className="shadow-elegant">
+              <CardContent className="p-6">
+                <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                  <Badge variant="secondary">Main</Badge>
+                  Project Setup & Configuration
+                </h3>
+                <MainForm 
+                  mainData={mainData}
+                  onFieldChange={handleMainChange}
+                  buildOptions={buildOptions}
+                  frontendOptions={frontendOptions}
+                  backendOptions={backendOptions}
+                  databaseOptions={databaseOptions}
+                  othersOptions={othersOptions}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="ui" className="mt-6">
             <Card className="shadow-elegant">
@@ -381,6 +507,9 @@ const PromptGenerator = () => {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-semibold">Generated Prompt</h3>
               <div className="flex gap-2">
+                <Button variant="outline" onClick={() => resetInputOnly()} size="sm">
+                  Reset input
+                </Button>
                 <Button variant="outline" onClick={resetForm} size="sm">
                   Reset
                 </Button>
@@ -818,6 +947,183 @@ const FunctionalityForm = ({
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  );
+};
+
+interface MainFormProps {
+  mainData: any;
+  onFieldChange: (field: string, value: string | string[]) => void;
+  buildOptions: string[];
+  frontendOptions: string[];
+  backendOptions: string[];
+  databaseOptions: string[];
+  othersOptions: string[];
+}
+
+const MainForm = ({ 
+  mainData, 
+  onFieldChange, 
+  buildOptions, 
+  frontendOptions, 
+  backendOptions, 
+  databaseOptions, 
+  othersOptions 
+}: MainFormProps) => {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Field 1: Build */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-foreground">1. Build</label>
+        <Select value={mainData.build} onValueChange={(value) => onFieldChange("build", value)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select what to build..." />
+          </SelectTrigger>
+          <SelectContent className="bg-popover border border-border shadow-lg">
+            {buildOptions.map((option) => (
+              <SelectItem key={option} value={option}>
+                {option}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Input
+          placeholder="Or type custom build type..."
+          value={mainData.build}
+          onChange={(e) => onFieldChange("build", e.target.value)}
+          className="mt-2"
+        />
+      </div>
+
+      {/* Field 2: Frontend */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-foreground">2. Frontend</label>
+        <Select value={mainData.frontend} onValueChange={(value) => onFieldChange("frontend", value)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select frontend technology..." />
+          </SelectTrigger>
+          <SelectContent className="bg-popover border border-border shadow-lg">
+            {frontendOptions.map((option) => (
+              <SelectItem key={option} value={option}>
+                {option}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Input
+          placeholder="Or type custom frontend technology..."
+          value={mainData.frontend}
+          onChange={(e) => onFieldChange("frontend", e.target.value)}
+          className="mt-2"
+        />
+      </div>
+
+      {/* Field 3: Backend */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-foreground">3. Backend</label>
+        <Select value={mainData.backend} onValueChange={(value) => onFieldChange("backend", value)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select backend technology..." />
+          </SelectTrigger>
+          <SelectContent className="bg-popover border border-border shadow-lg">
+            {backendOptions.map((option) => (
+              <SelectItem key={option} value={option}>
+                {option}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Input
+          placeholder="Or type custom backend technology..."
+          value={mainData.backend}
+          onChange={(e) => onFieldChange("backend", e.target.value)}
+          className="mt-2"
+        />
+      </div>
+
+      {/* Field 4: Database */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-foreground">4. Database</label>
+        <Select value={mainData.database} onValueChange={(value) => onFieldChange("database", value)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select database..." />
+          </SelectTrigger>
+          <SelectContent className="bg-popover border border-border shadow-lg">
+            {databaseOptions.map((option) => (
+              <SelectItem key={option} value={option}>
+                {option}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Input
+          placeholder="Or type custom database..."
+          value={mainData.database}
+          onChange={(e) => onFieldChange("database", e.target.value)}
+          className="mt-2"
+        />
+      </div>
+
+      {/* Field 5: Others */}
+      <div className="space-y-2 md:col-span-2">
+        <label className="text-sm font-medium text-foreground">5. Others</label>
+        <div className="space-y-2">
+          {othersOptions.map((option) => (
+            <div key={option} className="flex items-center space-x-2">
+              <Checkbox
+                id={`others-${option}`}
+                checked={mainData.others.includes(option)}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    onFieldChange("others", [...mainData.others, option]);
+                  } else {
+                    onFieldChange("others", mainData.others.filter((item: string) => item !== option));
+                  }
+                }}
+              />
+              <label 
+                htmlFor={`others-${option}`} 
+                className="text-sm text-foreground cursor-pointer"
+              >
+                {option}
+              </label>
+            </div>
+          ))}
+        </div>
+        <Input
+          placeholder="Add custom requirements..."
+          value=""
+          onChange={(e) => {
+            if (e.target.value && !mainData.others.includes(e.target.value)) {
+              onFieldChange("others", [...mainData.others, e.target.value]);
+              e.target.value = "";
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && e.currentTarget.value) {
+              if (!mainData.others.includes(e.currentTarget.value)) {
+                onFieldChange("others", [...mainData.others, e.currentTarget.value]);
+                e.currentTarget.value = "";
+              }
+            }
+          }}
+          className="mt-2"
+        />
+        {mainData.others.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {mainData.others.map((item: string, index: number) => (
+              <Badge 
+                key={index} 
+                variant="secondary" 
+                className="cursor-pointer"
+                onClick={() => onFieldChange("others", mainData.others.filter((_: string, i: number) => i !== index))}
+              >
+                {item} ×
+              </Badge>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
